@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Private Stream - VRM Private Room</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="canvas-container"></div>
+    
+    <!-- UI Overlay -->
+    <div id="ui-layer">
+        <div class="status-bar">
+            <span class="live-indicator">● LIVE</span>
+            <span class="viewers">1 Viewer (You)</span>
+        </div>
+        <div class="chat-box">
+            <div id="chat-feed"></div>
+            <div class="input-area">
+                <input type="text" id="user-input" placeholder="Type tip command (e.g. /dance, /wave)...">
+                <button id="send-btn">Send</button>
+            </div>
+        </div>
+        <div class="controls">
+            <button id="mute-btn">🎤 Mute</button>
+            <button id="settings-btn">⚙️</button>
+        </div>
+    </div>
+
+    <!-- Libraries via CDN -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "@pixiv/three-vrm": "https://unpkg.com/@pixiv/three-vrm@3.0.0/lib/index.js"
+            }
+        }
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
