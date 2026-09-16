@@ -1,0 +1,6 @@
+{
+  "name": "VRM Video Call",
+  "description": "Virtual AI Camera - VRM",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
