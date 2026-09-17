@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual AI Camera - VRM</title>
-  <script type="module" crossorigin src="/assets/index-DOG4tG6x.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DveGlcnH.css">
+  <script type="module" crossorigin src="/assets/index-DG8XHj49.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DyKOO28a.css">
 </head>
 <body>
     <div id="canvas-container"></div>
@@ -54,8 +54,41 @@
                     <option value="amber">Amber</option>
                 </select>
             </label>
+            <hr class="settings-divider">
+            <div class="avatar-settings-group">
+                <span class="settings-label">Active Avatar:</span>
+                <span id="settings-avatar-name" class="avatar-name-display">None</span>
+                <button id="change-avatar-btn" class="secondary-btn">🔄 Change Avatar</button>
+            </div>
         </div>
     </div>
+
+    <!-- Avatar Setup / Import Modal -->
+    <div id="avatar-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-icon">👤</div>
+                <h3>VRM Avatar Required</h3>
+            </div>
+            <p class="modal-description">
+                To begin the virtual video call, please select a 3D VRM avatar (<strong>.vrm</strong> file) from your device storage.
+            </p>
+            <div id="modal-error" class="modal-error" style="display: none;"></div>
+            <div class="modal-actions">
+                <button id="modal-import-btn" class="import-vrm-btn">📁 Import VRM</button>
+            </div>
+            <div id="modal-loader" class="modal-loader" style="display: none;">
+                <div class="spinner"></div>
+                <span id="modal-loader-text">Loading avatar...</span>
+            </div>
+            <p class="modal-subtext">
+                Your avatar is copied to persistent offline app storage and will automatically load on future launches.
+            </p>
+        </div>
+    </div>
+
+    <!-- Hidden file input for VRM files -->
+    <input type="file" id="vrm-file-input" accept=".vrm,model/gltf-binary,application/octet-stream" style="display: none;">
     
 </body>
 </html>

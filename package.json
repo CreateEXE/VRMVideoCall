@@ -4,7 +4,7 @@
   "description": "Virtual AI Camera - VRM",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build && npx cap copy android"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.2",

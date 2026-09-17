@@ -60,13 +60,191 @@ body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', s
     position: absolute;
     bottom: 60px;
     right: 20px;
-    background: rgba(0,0,0,0.8);
-    padding: 15px;
-    border-radius: 8px;
+    background: rgba(0,0,0,0.85);
+    padding: 16px;
+    border-radius: 12px;
     color: white;
     z-index: 100;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    min-width: 200px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.15);
 }
-.settings-panel h4 { margin: 0; }
+.settings-panel h4 { margin: 0 0 4px 0; font-size: 16px; }
+
+.settings-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    margin: 4px 0;
+    width: 100%;
+}
+
+.avatar-settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.settings-label {
+    font-size: 12px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.avatar-name-display {
+    font-size: 13px;
+    color: #00d2ff;
+    word-break: break-all;
+    font-weight: 500;
+    background: rgba(0, 210, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 210, 255, 0.2);
+}
+
+.secondary-btn {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s, transform 0.1s;
+}
+.secondary-btn:active {
+    background: rgba(255,255,255,0.25);
+    transform: scale(0.98);
+}
+
+/* Modal Overlay & Card */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+    pointer-events: auto;
+}
+
+.modal-card {
+    background: #1c1d24;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 380px;
+    width: 100%;
+    color: white;
+    box-shadow: 0 16px 36px rgba(0,0,0,0.7);
+    text-align: center;
+}
+
+.modal-header {
+    margin-bottom: 8px;
+}
+
+.modal-icon {
+    font-size: 44px;
+    margin-bottom: 6px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.modal-description {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #ccc;
+    margin: 12px 0 16px 0;
+}
+
+.modal-error {
+    background: rgba(255, 51, 102, 0.15);
+    border: 1px solid #ff3366;
+    color: #ff88a3;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    text-align: left;
+    word-break: break-word;
+    line-height: 1.4;
+}
+
+.modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.import-vrm-btn {
+    background: linear-gradient(135deg, #ff3366, #ff6b3d);
+    color: white;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4);
+    transition: transform 0.1s, opacity 0.2s;
+}
+.import-vrm-btn:active {
+    transform: scale(0.98);
+}
+
+.modal-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin: 16px 0 8px 0;
+    color: #00d2ff;
+    font-size: 14px;
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(0, 210, 255, 0.3);
+    border-top-color: #00d2ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.modal-subtext {
+    font-size: 12px;
+    color: #888;
+    margin-top: 16px;
+    margin-bottom: 0;
+    line-height: 1.4;
+}

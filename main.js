@@ -5,9 +5,9 @@ import * as THREE from 'three';
 import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { saveAvatar, loadStoredAvatar } from './AvatarStorage.js';
 
 // Configuration
-const AVATAR_URL = '/assets/Fait.vrm';
 const LIGHTING_PRESETS = {
     'hot': { main: 0xffaa00, rim: 0xff3366 },
     'cool': { main: 0x00ccff, rim: 0x0066ff },
@@ -220,6 +220,9 @@ class PrivateStreamScene {
         
         this.vrm = null;
         this.currentAnimation = null;
+        this.animations = [];
+        this.currentAvatarName = null;
+        this.isMuted = false;
         
         this.init();
     }
@@ -246,12 +249,14 @@ class PrivateStreamScene {
         this.orbitControls = new OrbitControls(this.camera, this.renderer.domElement);
         this.orbitControls.enabled = false;
 
-        this.loadAvatar();
         this.setupInputListener();
         this.setupUI();
+        this.setupAvatarImportEvents();
         
         window.addEventListener('resize', () => this.onWindowResize());
         this.animate();
+
+        this.initAvatar();
     }
 
     setupLighting(preset) {
@@ -270,38 +275,96 @@ class PrivateStreamScene {
         this.scene.add(ambient);
     }
 
-    async loadAvatar() {
+    async initAvatar() {
+        try {
+            const stored = await loadStoredAvatar();
+            if (stored && stored.data) {
+                this.showAvatarModal();
+                this.setModalLoader(true, `Loading saved avatar (${stored.name})...`);
+                await this.loadAvatarFromBuffer(stored.data, stored.name);
+                this.hideAvatarModal();
+            } else {
+                this.showAvatarModal();
+            }
+        } catch (error) {
+            console.error("Error loading stored avatar:", error);
+            this.showAvatarModal(error.message || "Failed to load stored avatar. Please import a VRM avatar.");
+        }
+    }
+
+    unloadCurrentAvatar() {
+        if (this.currentAnimation) {
+            this.currentAnimation.stop();
+            this.currentAnimation = null;
+        }
+        if (this.vrm) {
+            if (this.vrm.animationMixer) {
+                this.vrm.animationMixer.stopAllAction();
+                this.vrm.animationMixer.uncacheRoot(this.vrm.scene);
+            }
+            if (this.vrm.scene) {
+                this.scene.remove(this.vrm.scene);
+                if (typeof VRMUtils.deepDispose === 'function') {
+                    VRMUtils.deepDispose(this.vrm.scene);
+                }
+            }
+            this.vrm = null;
+        }
+        if (this.framingController) {
+            this.framingController.vrm = null;
+        }
+        this.animations = [];
+    }
+
+    async loadAvatarFromBuffer(arrayBuffer, name) {
+        this.unloadCurrentAvatar();
+
         const loader = new GLTFLoader();
         loader.register((parser) => new VRMLoaderPlugin(parser));
 
+        const blob = new Blob([arrayBuffer], { type: 'model/gltf-binary' });
+        const blobUrl = URL.createObjectURL(blob);
+
         try {
-            // Provide a reliable fallback if the local assets/avatar.vrm is missing.
-            const gltf = await loader.loadAsync(AVATAR_URL);
-            
+            const gltf = await loader.loadAsync(blobUrl);
+            URL.revokeObjectURL(blobUrl);
+
+            if (!gltf.userData.vrm) {
+                throw new Error("The file is a 3D model, but not a valid VRM avatar.");
+            }
+
             this.vrm = gltf.userData.vrm;
             VRMUtils.rotateVRM0(this.vrm); 
             this.scene.add(this.vrm.scene);
-
             this.vrm.scene.position.set(0, 0, 0); // Ground zero
 
+            // Update FramingController with new VRM without losing camera reference
             this.framingController.vrm = this.vrm;
             
-            // Initialize mode
+            // Preserve current camera mode and recalculate framing
             const modeSelect = document.getElementById('camera-mode');
-            this.framingController.setMode(modeSelect.value, this.scene);
+            const currentMode = modeSelect ? modeSelect.value : 'SELFIE';
+            this.framingController.setMode(currentMode, this.scene);
 
             this.vrm.animationMixer = new THREE.AnimationMixer(this.vrm.scene);
             this.animations = gltf.animations || [];
             if (this.animations && this.animations.length > 0) {
                 this.playAnimation(this.animations[0]);
             }
+
+            this.currentAvatarName = name || 'Avatar.vrm';
+            this.updateAvatarUI(this.currentAvatarName);
+            this.logChat("System", `Avatar loaded: ${this.currentAvatarName}`);
+            return true;
         } catch (error) {
+            URL.revokeObjectURL(blobUrl);
             console.error("Error loading VRM:", error);
-            this.logChat("System", "Avatar load failed.");
+            throw error;
         }
     }
 
     playAnimation(clip) {
+        if (!clip) return;
         if (this.vrm && this.vrm.animationMixer) {
             if (this.currentAnimation) {
                 this.currentAnimation.fadeOut(0.5);
@@ -408,14 +471,22 @@ class PrivateStreamScene {
 
         switch(cmd) {
             case 'dance':
-                targetClip = animations.find(c => c.name.toLowerCase().includes('dance')) || animations[1];
-                this.logChat("System", "Playing: Dance Routine 💃");
-                if (targetClip) this.playAnimation(targetClip);
+                targetClip = animations.find(c => c.name.toLowerCase().includes('dance')) || (animations.length > 1 ? animations[1] : null);
+                if (targetClip) {
+                    this.logChat("System", "Playing: Dance Routine 💃");
+                    this.playAnimation(targetClip);
+                } else {
+                    this.logChat("System", "No dance animation found on this avatar.");
+                }
                 break;
             case 'wave':
-                targetClip = animations.find(c => c.name.toLowerCase().includes('wave')) || animations[0];
-                this.logChat("System", "Playing: Wave 👋");
-                if (targetClip) this.playAnimation(targetClip);
+                targetClip = animations.find(c => c.name.toLowerCase().includes('wave')) || (animations.length > 0 ? animations[0] : null);
+                if (targetClip) {
+                    this.logChat("System", "Playing: Wave 👋");
+                    this.playAnimation(targetClip);
+                } else {
+                    this.logChat("System", "No wave animation found on this avatar.");
+                }
                 break;
             case 'light hot':
                 this.setupLighting(LIGHTING_PRESETS['hot']);
@@ -425,6 +496,126 @@ class PrivateStreamScene {
                 this.setupLighting(LIGHTING_PRESETS['cool']);
                 this.logChat("System", "Lighting: Cool 🧊");
                 break;
+            default:
+                this.logChat("System", `Unknown command: /${cmd}`);
+                break;
+        }
+    }
+
+    setupAvatarImportEvents() {
+        const fileInput = document.getElementById('vrm-file-input');
+        const modalImportBtn = document.getElementById('modal-import-btn');
+        const changeAvatarBtn = document.getElementById('change-avatar-btn');
+
+        const triggerFilePicker = () => {
+            if (fileInput) {
+                fileInput.value = '';
+                fileInput.click();
+            }
+        };
+
+        if (modalImportBtn) {
+            modalImportBtn.addEventListener('click', triggerFilePicker);
+        }
+
+        if (changeAvatarBtn) {
+            changeAvatarBtn.addEventListener('click', triggerFilePicker);
+        }
+
+        if (fileInput) {
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files && e.target.files[0];
+                fileInput.value = '';
+                if (!file) {
+                    return; // User cancelled file picker
+                }
+
+                if (!file.name.toLowerCase().endsWith('.vrm')) {
+                    this.showModalError("Please select a valid .vrm avatar file.");
+                    this.showAvatarModal("Please select a valid .vrm avatar file.");
+                    this.logChat("System", "Selected file is not a .vrm avatar.");
+                    return;
+                }
+
+                try {
+                    this.showAvatarModal();
+                    this.setModalLoader(true, `Importing ${file.name}...`);
+                    
+                    // Copy selected VRM into persistent application storage
+                    const saved = await saveAvatar(file);
+                    
+                    this.setModalLoader(true, `Loading avatar into scene...`);
+                    await this.loadAvatarFromBuffer(saved.data, saved.name);
+                    
+                    this.setModalLoader(false);
+                    this.hideAvatarModal();
+                } catch (err) {
+                    console.error("Avatar import error:", err);
+                    this.setModalLoader(false);
+                    this.showModalError(err.message || "Failed to import avatar. Please try another VRM file.");
+                    this.logChat("System", `Import failed: ${err.message || 'Error'}`);
+                }
+            });
+        }
+    }
+
+    showAvatarModal(errorMessage = null) {
+        const modal = document.getElementById('avatar-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+        if (errorMessage) {
+            this.showModalError(errorMessage);
+        } else {
+            this.clearModalError();
+        }
+    }
+
+    hideAvatarModal() {
+        const modal = document.getElementById('avatar-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        this.clearModalError();
+        this.setModalLoader(false);
+    }
+
+    showModalError(msg) {
+        const errorEl = document.getElementById('modal-error');
+        if (errorEl) {
+            errorEl.textContent = msg;
+            errorEl.style.display = 'block';
+        }
+    }
+
+    clearModalError() {
+        const errorEl = document.getElementById('modal-error');
+        if (errorEl) {
+            errorEl.textContent = '';
+            errorEl.style.display = 'none';
+        }
+    }
+
+    setModalLoader(isLoading, text = "Loading...") {
+        const loader = document.getElementById('modal-loader');
+        const loaderText = document.getElementById('modal-loader-text');
+        const importBtn = document.getElementById('modal-import-btn');
+        if (loader) {
+            loader.style.display = isLoading ? 'flex' : 'none';
+        }
+        if (loaderText) {
+            loaderText.textContent = text;
+        }
+        if (importBtn) {
+            importBtn.disabled = isLoading;
+            importBtn.style.opacity = isLoading ? '0.6' : '1';
+        }
+    }
+
+    updateAvatarUI(name) {
+        const displayEl = document.getElementById('settings-avatar-name');
+        if (displayEl) {
+            displayEl.textContent = name || 'None';
         }
     }
 
