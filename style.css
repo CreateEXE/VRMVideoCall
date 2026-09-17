@@ -55,3 +55,18 @@ body { margin: 0; overflow: hidden; background: #111; font-family: 'Segoe UI', s
 }
 
 @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+.settings-panel {
+    position: absolute;
+    bottom: 60px;
+    right: 20px;
+    background: rgba(0,0,0,0.8);
+    padding: 15px;
+    border-radius: 8px;
+    color: white;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.settings-panel h4 { margin: 0; }

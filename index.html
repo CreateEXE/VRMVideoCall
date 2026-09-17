@@ -26,7 +26,6 @@
                     <option value="FREE">FREE</option>
                 </select>
             </div>
-
             <span class="viewers">1 Viewer (You)</span>
         </div>
         
@@ -42,8 +41,20 @@
             <button id="mute-btn">🎤 Mute</button>
             <button id="settings-btn">⚙️</button>
         </div>
-    </div>
 
+        <!-- Settings Panel -->
+        <div id="settings-panel" style="display: none;" class="settings-panel">
+            <h4>Settings</h4>
+            <label>FOV: <input type="range" id="fov-slider" min="30" max="120" value="60"></label>
+            <label>Lighting:
+                <select id="light-select">
+                    <option value="hot">Hot</option>
+                    <option value="cool">Cool</option>
+                    <option value="amber">Amber</option>
+                </select>
+            </label>
+        </div>
+    </div>
     
     <script type="module" src="/main.js"></script>
 </body>

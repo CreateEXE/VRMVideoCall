@@ -240,7 +240,7 @@ class PrivateStreamScene {
         this.camera.position.set(0,0,0);
         this.camera.rotation.set(0,0,0);
 
-        this.framingController = new FramingController(null, this.phone);
+        this.framingController = new FramingController(null, this.phone, this.camera);
 
         // Orbit controls for FREE mode / testing
         this.orbitControls = new OrbitControls(this.camera, this.renderer.domElement);
@@ -290,8 +290,10 @@ class PrivateStreamScene {
             const modeSelect = document.getElementById('camera-mode');
             this.framingController.setMode(modeSelect.value, this.scene);
 
-            if (this.vrm.animationLoader && this.vrm.animationLoader.clips.length > 0) {
-                this.playAnimation(this.vrm.animationLoader.clips[0]);
+            this.vrm.animationMixer = new THREE.AnimationMixer(this.vrm.scene);
+            this.animations = gltf.animations || [];
+            if (this.animations && this.animations.length > 0) {
+                this.playAnimation(this.animations[0]);
             }
         } catch (error) {
             console.error("Error loading VRM:", error);
@@ -350,8 +352,14 @@ class PrivateStreamScene {
             // Toggle orbit controls
             if (mode === 'FREE') {
                 this.orbitControls.enabled = true;
-                // Detach camera from phone for completely free testing
+                const worldPos = new THREE.Vector3();
+                const worldQuat = new THREE.Quaternion();
+                this.camera.getWorldPosition(worldPos);
+                this.camera.getWorldQuaternion(worldQuat);
+                
                 this.scene.add(this.camera);
+                this.camera.position.copy(worldPos);
+                this.camera.quaternion.copy(worldQuat);
             } else {
                 this.orbitControls.enabled = false;
                 this.phone.cameraPoint.add(this.camera);
@@ -359,10 +367,43 @@ class PrivateStreamScene {
                 this.camera.rotation.set(0,0,0);
             }
         });
+
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        if (settingsBtn && settingsPanel) {
+            settingsBtn.addEventListener('click', () => {
+                settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'flex' : 'none';
+            });
+        }
+
+        const fovSlider = document.getElementById('fov-slider');
+        if (fovSlider) {
+            fovSlider.addEventListener('input', (e) => {
+                this.camera.fov = parseFloat(e.target.value);
+                this.camera.updateProjectionMatrix();
+            });
+        }
+
+        const lightSelect = document.getElementById('light-select');
+        if (lightSelect) {
+            lightSelect.addEventListener('change', (e) => {
+                this.setupLighting(LIGHTING_PRESETS[e.target.value]);
+            });
+        }
+
+        const muteBtn = document.getElementById('mute-btn');
+        if (muteBtn) {
+            this.isMuted = false;
+            muteBtn.addEventListener('click', () => {
+                this.isMuted = !this.isMuted;
+                muteBtn.innerText = this.isMuted ? '🔇 Unmute' : '🎤 Mute';
+                this.logChat("System", this.isMuted ? "Microphone muted." : "Microphone unmuted.");
+            });
+        }
     }
 
     executeCommand(cmd) {
-        const animations = this.vrm?.animationLoader?.clips || [];
+        const animations = this.animations || [];
         let targetClip = null;
 
         switch(cmd) {
