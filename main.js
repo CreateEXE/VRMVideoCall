@@ -7,7 +7,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 // Configuration
-const AVATAR_URL = '/assets/Fait.vrm.glb';
+const AVATAR_URL = '/assets/Fait.vrm';
 const LIGHTING_PRESETS = {
     'hot': { main: 0xffaa00, rim: 0xff3366 },
     'cool': { main: 0x00ccff, rim: 0x0066ff },
